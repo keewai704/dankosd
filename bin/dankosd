@@ -1,0 +1,37 @@
+#!/bin/sh
+set -eu
+
+config_path="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/ddc-osd"
+
+usage() {
+    echo "Usage: $0 serve|brightness <0-100>|contrast <0-100>|show <brightness|contrast> <0-100>|status" >&2
+    exit 2
+}
+
+[ "$#" -ge 1 ] || usage
+
+case "$1" in
+    serve)
+        shift
+        exec quickshell -p "$config_path" "$@"
+        ;;
+    brightness|contrast)
+        command_name="$1"
+        shift
+        [ "$#" -eq 1 ] || usage
+        exec quickshell ipc --any-display -p "$config_path" call osd "$command_name" "$1"
+        ;;
+    show)
+        shift
+        [ "$#" -eq 2 ] || usage
+        exec quickshell ipc --any-display -p "$config_path" call osd show "$1" "$2"
+        ;;
+    status)
+        shift
+        [ "$#" -eq 0 ] || usage
+        exec quickshell ipc --any-display -p "$config_path" call osd status
+        ;;
+    *)
+        usage
+        ;;
+esac
