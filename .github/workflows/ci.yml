@@ -41,7 +41,11 @@ jobs:
       image: archlinux:base-devel
     steps:
       - name: Install packaging dependencies
-        run: pacman -Syu --noconfirm --needed git
+        run: |
+          set -eu
+          if ! pacman -Q git >/dev/null 2>&1; then
+            pacman -Syu --noconfirm git
+          fi
 
       - name: Set git defaults
         run: git config --global init.defaultBranch main
