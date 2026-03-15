@@ -10,7 +10,10 @@ jobs:
   lint-and-deb:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Set git defaults
+        run: git config --global init.defaultBranch main
+
+      - uses: actions/checkout@v6.0.2
 
       - name: Validate shell scripts
         run: |
@@ -27,7 +30,7 @@ jobs:
         run: ./scripts/build-deb.sh
 
       - name: Upload Debian artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.0
         with:
           name: dankosd-deb
           path: dist/*.deb
@@ -40,7 +43,10 @@ jobs:
       - name: Install packaging dependencies
         run: pacman -Syu --noconfirm git
 
-      - uses: actions/checkout@v4
+      - name: Set git defaults
+        run: git config --global init.defaultBranch main
+
+      - uses: actions/checkout@v6.0.2
 
       - name: Build Arch package
         run: |
@@ -49,7 +55,7 @@ jobs:
           su builder -c './scripts/build-arch-package.sh'
 
       - name: Upload Arch artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.0
         with:
           name: dankosd-arch
           path: dist/*.pkg.tar.*
@@ -57,9 +63,19 @@ jobs:
   nix:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Set git defaults
+        run: git config --global init.defaultBranch main
 
-      - uses: cachix/install-nix-action@v31
+      - uses: actions/checkout@v6.0.2
+
+      - name: Expand system uid/gid ceiling for Nix users
+        run: |
+          sudo sed -ri \
+            -e 's/^(SYS_UID_MAX[[:space:]]+).*/\1 65535/' \
+            -e 's/^(SYS_GID_MAX[[:space:]]+).*/\1 65535/' \
+            /etc/login.defs
+
+      - uses: cachix/install-nix-action@v31.10.1
 
       - name: Build Nix package
         run: nix build .#dankosd

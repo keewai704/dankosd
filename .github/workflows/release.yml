@@ -12,7 +12,10 @@ jobs:
   build-deb:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Set git defaults
+        run: git config --global init.defaultBranch main
+
+      - uses: actions/checkout@v6.0.2
 
       - name: Derive version
         id: version
@@ -21,7 +24,7 @@ jobs:
       - name: Build Debian package
         run: VERSION='${{ steps.version.outputs.value }}' ./scripts/build-deb.sh
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7.0.0
         with:
           name: deb
           path: dist/*.deb
@@ -38,7 +41,10 @@ jobs:
       - name: Install packaging dependencies
         run: pacman -Syu --noconfirm git
 
-      - uses: actions/checkout@v4
+      - name: Set git defaults
+        run: git config --global init.defaultBranch main
+
+      - uses: actions/checkout@v6.0.2
 
       - name: Build Arch package
         run: |
@@ -46,7 +52,7 @@ jobs:
           chown -R builder:builder "$PWD"
           su builder -c "VERSION='${{ steps.version.outputs.value }}' ./scripts/build-arch-package.sh"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7.0.0
         with:
           name: arch
           path: dist/*.pkg.tar.*
@@ -54,8 +60,19 @@ jobs:
   nix:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: cachix/install-nix-action@v31
+      - name: Set git defaults
+        run: git config --global init.defaultBranch main
+
+      - uses: actions/checkout@v6.0.2
+
+      - name: Expand system uid/gid ceiling for Nix users
+        run: |
+          sudo sed -ri \
+            -e 's/^(SYS_UID_MAX[[:space:]]+).*/\1 65535/' \
+            -e 's/^(SYS_GID_MAX[[:space:]]+).*/\1 65535/' \
+            /etc/login.defs
+
+      - uses: cachix/install-nix-action@v31.10.1
       - run: nix build .#dankosd
 
   publish:
@@ -65,11 +82,11 @@ jobs:
       - build-arch
       - nix
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8.0.1
         with:
           path: release-artifacts
 
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v2.5.3
         with:
           files: |
             release-artifacts/**/*.deb
