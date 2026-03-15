@@ -3,11 +3,10 @@ import QtQuick
 QtObject {
     id: root
 
-    property int brightnessValue: 0
-    property int contrastValue: 0
+    property string iconName: "brightness_medium"
+    property int levelValue: 0
 
-    signal brightnessRequested()
-    signal contrastRequested()
+    signal showRequested()
 
     function clampPercent(value) {
         return Math.max(0, Math.min(100, value));
@@ -20,39 +19,46 @@ QtObject {
         return clampPercent(value);
     }
 
-    function showBrightness(raw) {
+    function resolveIcon(name) {
+        switch ((name || "").toLowerCase()) {
+        case "brightness":
+            return "brightness_medium";
+        case "contrast":
+            return "contrast";
+        default:
+            return (name || "").trim();
+        }
+    }
+
+    function showIcon(name, raw) {
+        const resolvedIcon = resolveIcon(name);
         const value = parsePercent(raw);
+        if (!resolvedIcon)
+            return "Invalid icon name";
         if (value === null)
-            return "Invalid brightness value: " + raw;
-        brightnessValue = value;
-        brightnessRequested();
-        return "Brightness OSD " + value + "%";
+            return "Invalid OSD value: " + raw;
+        iconName = resolvedIcon;
+        levelValue = value;
+        showRequested();
+        return "OSD " + resolvedIcon + " " + value + "%";
+    }
+
+    function showBrightness(raw) {
+        return showIcon("brightness", raw);
     }
 
     function showContrast(raw) {
-        const value = parsePercent(raw);
-        if (value === null)
-            return "Invalid contrast value: " + raw;
-        contrastValue = value;
-        contrastRequested();
-        return "Contrast OSD " + value + "%";
+        return showIcon("contrast", raw);
     }
 
-    function showLevel(kind, raw) {
-        switch ((kind || "").toLowerCase()) {
-        case "brightness":
-            return showBrightness(raw);
-        case "contrast":
-            return showContrast(raw);
-        default:
-            return "Unknown OSD kind: " + kind;
-        }
+    function showLevel(icon, raw) {
+        return showIcon(icon, raw);
     }
 
     function status() {
         return JSON.stringify({
-            "brightness": brightnessValue,
-            "contrast": contrastValue
+            "icon": iconName,
+            "value": levelValue
         });
     }
 }

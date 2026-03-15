@@ -18,19 +18,6 @@ ShellRoot {
         delegate: LevelOSD {
             modelData: item
             osdState: root.osdStateRef
-            kind: "brightness"
-            iconName: "brightness_medium"
-        }
-    }
-
-    Variants {
-        model: SettingsData.getFilteredScreens("osd")
-
-        delegate: LevelOSD {
-            modelData: item
-            osdState: root.osdStateRef
-            kind: "contrast"
-            iconName: "contrast"
         }
     }
 
@@ -45,7 +32,7 @@ ShellRoot {
             return osdState.showContrast(value);
         }
 
-        function show(kind: string, value: string): string {
+        function level(kind: string, value: string): string {
             return osdState.showLevel(kind, value);
         }
 

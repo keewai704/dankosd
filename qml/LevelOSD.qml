@@ -6,7 +6,6 @@ DankOSD {
     id: root
 
     property var osdState
-    property string kind: "brightness"
     property string iconName: "brightness_medium"
     property int levelValue: 0
 
@@ -27,16 +26,9 @@ DankOSD {
     Connections {
         target: osdState
 
-        function onBrightnessRequested() {
-            if (root.kind !== "brightness")
-                return;
-            root.updateAndShow(osdState.brightnessValue);
-        }
-
-        function onContrastRequested() {
-            if (root.kind !== "contrast")
-                return;
-            root.updateAndShow(osdState.contrastValue);
+        function onShowRequested() {
+            root.iconName = osdState.iconName;
+            root.updateAndShow(osdState.levelValue);
         }
     }
 

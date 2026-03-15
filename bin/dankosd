@@ -1,10 +1,31 @@
 #!/bin/sh
 set -eu
 
-config_path="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/ddc-osd"
+resolve_config_path() {
+    if [ "${DANKOSD_CONFIG_PATH:-}" ]; then
+        printf '%s\n' "$DANKOSD_CONFIG_PATH"
+        return 0
+    fi
+
+    user_path="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/ddc-osd"
+    if [ -f "$user_path/shell.qml" ]; then
+        printf '%s\n' "$user_path"
+        return 0
+    fi
+
+    system_path="/usr/share/dankosd/qml"
+    if [ -f "$system_path/shell.qml" ]; then
+        printf '%s\n' "$system_path"
+        return 0
+    fi
+
+    printf '%s\n' "$user_path"
+}
+
+config_path="$(resolve_config_path)"
 
 usage() {
-    echo "Usage: $0 serve|brightness <0-100>|contrast <0-100>|show <brightness|contrast> <0-100>|status" >&2
+    echo "Usage: $0 serve|brightness <0-100>|contrast <0-100>|show <icon_name> <0-100>|<icon_name> <0-100>|status" >&2
     exit 2
 }
 
@@ -24,7 +45,7 @@ case "$1" in
     show)
         shift
         [ "$#" -eq 2 ] || usage
-        exec quickshell ipc --any-display -p "$config_path" call osd show "$1" "$2"
+        exec quickshell ipc --any-display -p "$config_path" call osd level "$1" "$2"
         ;;
     status)
         shift
@@ -32,6 +53,9 @@ case "$1" in
         exec quickshell ipc --any-display -p "$config_path" call osd status
         ;;
     *)
+        if [ "$#" -eq 2 ]; then
+            exec quickshell ipc --any-display -p "$config_path" call osd level "$1" "$2"
+        fi
         usage
         ;;
 esac

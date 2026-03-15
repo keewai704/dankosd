@@ -1,0 +1,21 @@
+pkgname=dankosd
+pkgver=${PKGVER:-0.1.0}
+pkgrel=${PKGREL:-1}
+pkgdesc="Generic DMS-styled standalone OSD for Quickshell"
+arch=('any')
+url="https://github.com/keewai704/dankosd"
+license=('MIT')
+depends=()
+optdepends=(
+  'quickshell: run the OSD shell'
+  'dankmaterialshell: provide the DMS modules and theme runtime'
+)
+source=("${SOURCE_PATH:-${url}/archive/refs/tags/v${pkgver}.tar.gz}")
+sha256sums=("${PKGSUM:-SKIP}")
+
+package() {
+  local source_dir
+  source_dir="$(find "${srcdir}" -maxdepth 1 -mindepth 1 -type d -name "${pkgname}*" | head -n1)"
+  cd "${source_dir}"
+  DESTDIR="${pkgdir}" PREFIX=/usr ./scripts/stage-system.sh
+}

@@ -1,0 +1,65 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  lint-and-deb:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate shell scripts
+        run: |
+          bash -n \
+            bin/dankosd \
+            scripts/install.sh \
+            scripts/version.sh \
+            scripts/stage-system.sh \
+            scripts/build-deb.sh \
+            scripts/build-arch-package.sh \
+            integrations/ddcfast_osd.sh
+
+      - name: Build Debian package
+        run: ./scripts/build-deb.sh
+
+      - name: Upload Debian artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dankosd-deb
+          path: dist/*.deb
+
+  arch-package:
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:base-devel
+    steps:
+      - name: Install packaging dependencies
+        run: pacman -Syu --noconfirm git
+
+      - uses: actions/checkout@v4
+
+      - name: Build Arch package
+        run: |
+          useradd -m builder
+          chown -R builder:builder "$PWD"
+          su builder -c './scripts/build-arch-package.sh'
+
+      - name: Upload Arch artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dankosd-arch
+          path: dist/*.pkg.tar.*
+
+  nix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: cachix/install-nix-action@v31
+
+      - name: Build Nix package
+        run: nix build .#dankosd

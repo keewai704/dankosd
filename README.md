@@ -32,8 +32,9 @@ dankosd contrast 37
 Generic entrypoint:
 
 ```bash
+dankosd contrast 25
 dankosd show brightness 50
-dankosd show contrast 25
+dankosd settings 75
 ```
 
 Inspect current in-memory state:
@@ -59,9 +60,14 @@ dms-ddc-osd brightness 42
 - [`qml/`](./qml): Quickshell config and OSD components
 - [`bin/dankosd`](./bin/dankosd): CLI entrypoint
 - [`systemd/dms-ddc-osd.service`](./systemd/dms-ddc-osd.service): user service example
+- [`systemd/dankosd.service`](./systemd/dankosd.service): system package user service
 - [`integrations/ddcfast_osd.sh`](./integrations/ddcfast_osd.sh): `ddcfast` bridge
 - [`examples/hyprland/binds.conf`](./examples/hyprland/binds.conf): sample Hyprland binds
 - [`scripts/install.sh`](./scripts/install.sh): local installer for this machine layout
+- [`scripts/stage-system.sh`](./scripts/stage-system.sh): staging helper for distro packages
+- [`packaging/arch/PKGBUILD`](./packaging/arch/PKGBUILD): Arch package definition
+- [`scripts/build-deb.sh`](./scripts/build-deb.sh): Ubuntu/Debian package builder
+- [`flake.nix`](./flake.nix): Nix flake package entrypoint
 
 ## Install
 
@@ -94,12 +100,34 @@ The bridge script:
 - supports both brightness and contrast
 - respects brightness scaling such as `--scale 0.75`
 
+## Packaging
+
+Arch package:
+
+```bash
+./scripts/build-arch-package.sh
+```
+
+Ubuntu/Debian package:
+
+```bash
+./scripts/build-deb.sh
+```
+
+Nix package:
+
+```bash
+nix build .#dankosd
+```
+
+The system package installs the QML files under `/usr/share/dankosd/qml` and expects DMS to be available at `/usr/share/quickshell/dms` unless you override `DANKOSD_DMS_PATH`.
+
 ## Design Notes
 
 The OSD itself is intentionally small:
 
 - `qml/shell.qml` wires IPC and screen variants
-- `qml/DdcOsdState.qml` holds current brightness/contrast values and dispatches update signals
+- `qml/DdcOsdState.qml` holds the current icon/value pair and dispatches update signals
 - `qml/LevelOSD.qml` renders a DMS-styled icon + level bar using `DankOSD`, `Theme`, and `SettingsData`
 
 Because it imports DMS runtime modules from the installed system path, visual changes in DMS theme/settings are reflected automatically.
